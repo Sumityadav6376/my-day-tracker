@@ -1,0 +1,17 @@
+{
+  "name": "My Day \u2014 Time Tracker",
+  "short_name": "My Day",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#0b1220",
+  "theme_color": "#101827",
+  "description": "Track productive time, distractions and daily routines.",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#101827">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<title>My Day — Time Tracker</title>
+<style>
+:root{--bg:#0b1220;--panel:#121d2e;--panel2:#18263a;--text:#edf3fb;--muted:#91a1b7;--line:#26364d;--green:#35c98a;--red:#ff6b70;--blue:#6ba8ff;--amber:#f4bd58}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#101b2c,#0b1220 360px);color:var(--text);font:15px system-ui,-apple-system,Segoe UI,Roboto,sans-serif;min-height:100vh}
+main{max-width:760px;margin:auto;padding:20px 15px 48px}.top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}.eyebrow{color:var(--muted);font-size:12px;letter-spacing:.12em;text-transform:uppercase}.top h1{font-size:27px;margin:3px 0 0}.date{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:10px;max-width:155px}
+.card{background:rgba(18,29,46,.96);border:1px solid var(--line);border-radius:19px;padding:16px;margin:13px 0;box-shadow:0 12px 35px #0002}
+.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.stat{background:var(--panel2);border-radius:14px;padding:14px}.stat .label{font-size:12px;color:var(--muted)}.stat strong{display:block;font-size:25px;margin-top:5px}.green{color:var(--green)}.red{color:var(--red)}.blue{color:var(--blue)}.amber{color:var(--amber)}
+h2{font-size:17px;margin:0 0 13px}.sub{color:var(--muted);font-size:12px;margin-top:4px}
+.bar{height:13px;background:#26364d;border-radius:99px;overflow:hidden;display:flex;margin:12px 0 8px}.bar span{height:100%}.legend{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:12px}.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}
+label{display:block;color:var(--muted);font-size:12px;margin:0 0 6px}input,select{width:100%;background:#0c1626;color:var(--text);border:1px solid var(--line);border-radius:11px;padding:12px;font:inherit;min-width:0}input:focus,select:focus{outline:2px solid #6ba8ff66;border-color:var(--blue)}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:11px}.field{margin-bottom:11px}.wide{grid-column:1/-1}
+button{border:0;border-radius:12px;padding:12px 15px;font:600 14px system-ui;cursor:pointer}.primary{background:var(--green);color:#062217;width:100%}.secondary{background:#243650;color:var(--text)}.danger{background:#49252d;color:#ffb4b7}.actions{display:flex;gap:8px;flex-wrap:wrap}.actions button{flex:1}
+.activity{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 0;border-bottom:1px solid var(--line)}.activity:last-child{border:0}.actname{font-weight:600}.actmeta{font-size:12px;color:var(--muted);margin-top:3px}.pill{font-size:11px;border-radius:99px;padding:5px 8px;background:#243650;white-space:nowrap}.empty{color:var(--muted);text-align:center;padding:22px 5px;font-size:13px}
+.running{display:none;background:#1b3b35;border:1px solid #286c56;color:#c9ffeb;border-radius:12px;padding:12px;margin-bottom:12px}.running strong{display:block;margin-bottom:4px}
+.smallbtn{padding:7px 10px;font-size:12px}.foot{color:var(--muted);font-size:11px;text-align:center;line-height:1.5;margin-top:18px}
+@media(min-width:600px){.stats{grid-template-columns:repeat(4,minmax(0,1fr))}.top h1{font-size:31px}}
+</style>
+</head>
+<body>
+<main>
+ <header class="top">
+  <div><div class="eyebrow">Your personal time tracker</div><h1>My Day <span aria-hidden="true">✦</span></h1></div>
+  <input class="date" type="date" id="day">
+ </header>
+ <section class="card">
+  <h2>Today's overview</h2>
+  <div class="stats">
+   <div class="stat"><div class="label">📚 Productive</div><strong class="green" id="productive">0m</strong></div>
+   <div class="stat"><div class="label">📱 Distracted / wasted</div><strong class="red" id="wasted">0m</strong></div>
+   <div class="stat"><div class="label">☕ Other time</div><strong class="blue" id="other">0m</strong></div>
+   <div class="stat"><div class="label">🌅 Wake-up time</div><strong class="amber" id="wake">—</strong></div>
+  </div>
+  <div class="bar"><span id="pbar" style="background:var(--green);width:0%"></span><span id="wbar" style="background:var(--red);width:0%"></span><span id="obar" style="background:var(--blue);width:0%"></span></div>
+  <div class="legend"><span><i class="dot" style="background:var(--green)"></i>Productive</span><span><i class="dot" style="background:var(--red)"></i>Wasted</span><span><i class="dot" style="background:var(--blue)"></i>Other</span></div>
+  <div class="sub" id="tracked">0 hours tracked today</div>
+ </section>
+
+ <section class="card">
+  <h2>Track an activity</h2>
+  <div class="running" id="runningBox"><strong id="runningName">Activity running</strong><span id="runningSince"></span><div style="margin-top:10px"><button class="primary" id="stopBtn">Stop & save activity</button></div></div>
+  <div class="field"><label for="name">What did you do?</label><input id="name" placeholder="e.g. Studying Probability, YouTube, Wake up"></div>
+  <div class="fields">
+   <div class="field"><label for="category">Category</label><select id="category"><option value="productive">Productive</option><option value="wasted">Wasted / distraction</option><option value="other">Other / routine</option></select></div>
+   <div class="field"><label for="start">Start time</label><input id="start" type="time"></div>
+   <div class="field"><label for="end">End time (optional)</label><input id="end" type="time"></div>
+   <div class="field"><label>&nbsp;</label><button class="secondary" id="nowStart" style="width:100%">Use current time</button></div>
+  </div>
+  <div class="actions"><button class="primary" id="addBtn">＋ Add activity</button><button class="secondary" id="beginBtn">▶ Start live tracking</button></div>
+  <div class="sub">Add past activities with start and end times, or start a live timer and stop it when you're done.</div>
+ </section>
+
+ <section class="card">
+  <h2>History & backup</h2>
+  <div class="sub" style="margin:0 0 12px">Choose an earlier date at the top to view that day's entries. Export a backup regularly so your history can be restored if you change phones or clear browser data.</div>
+  <div class="actions">
+   <button class="secondary" id="exportBtn">↓ Export all history</button>
+   <button class="secondary" id="importBtn">↑ Restore backup</button>
+  </div>
+  <input id="backupFile" type="file" accept="application/json,.json" style="display:none">
+ </section>
+ <section class="card">
+  <h2>Today's activity log</h2>
+  <div id="list"><div class="empty">No activities yet. Add your first activity above.</div></div>
+ </section>
+ <div class="foot">Your entries are saved in this browser on this device. They are not sent to a server. Use the same browser to see your history.</div>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const today=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
+const key=d=>'myday_entries_'+d;
+let selected=today(), entries=[], running=null;
+const pad=n=>String(n).padStart(2,'0');
+const timeNow=()=>{const d=new Date();return pad(d.getHours())+':'+pad(d.getMinutes())};
+function load(){selected=$('day').value||today();entries=JSON.parse(localStorage.getItem(key(selected))||'[]');render()}
+function save(){localStorage.setItem(key(selected),JSON.stringify(entries));render()}
+function mins(t){if(!t)return null;let [h,m]=t.split(':').map(Number);return h*60+m}
+function duration(a){let s=mins(a.start),e=mins(a.end);if(s===null||e===null)return 0;if(e<s)e+=1440;return e-s}
+function fmt(n){if(!n)return '0m';let h=Math.floor(n/60),m=n%60;return h?`${h}h ${m}m`:`${m}m`}
+function render(){
+ let totals={productive:0,wasted:0,other:0};
+ entries.forEach(a=>totals[a.category]=(totals[a.category]||0)+duration(a));
+ $('productive').textContent=fmt(totals.productive);$('wasted').textContent=fmt(totals.wasted);$('other').textContent=fmt(totals.other);
+ let total=Object.values(totals).reduce((x,y)=>x+y,0);
+ $('tracked').textContent=`${fmt(total)} tracked today · ${Math.round(total/60*10)/10} hours`;
+ $('pbar').style.width=(total?totals.productive/total*100:0)+'%';$('wbar').style.width=(total?totals.wasted/total*100:0)+'%';$('obar').style.width=(total?totals.other/total*100:0)+'%';
+ let wakes=entries.filter(a=>/wake.?up/i.test(a.name)).sort((a,b)=>a.start.localeCompare(b.start));
+ $('wake').textContent=wakes.length?(wakes[0].start||'—'):'—';
+ let list=$('list');
+ if(!entries.length){list.innerHTML='<div class="empty">No activities yet. Add your first activity above.</div>';return}
+ const sorted=[...entries].sort((a,b)=>b.start.localeCompare(a.start));
+ list.innerHTML=sorted.map(a=>{let c=a.category,tag=c==='productive'?'Productive':c==='wasted'?'Wasted':'Other';return `<div class="activity"><div><div class="actname">${esc(a.name)}</div><div class="actmeta">${a.start||'—'} – ${a.end||'In progress'} · ${fmt(duration(a))}</div></div><div style="display:flex;align-items:center;gap:7px"><span class="pill">${tag}</span><button class="danger smallbtn" data-del="${a.id}" aria-label="Delete activity">✕</button></div></div>`}).join('');
+ list.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{entries=entries.filter(a=>a.id!==b.dataset.del);save()});
+}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function clearForm(){$('name').value='';$('start').value='';$('end').value=''}
+$('day').value=today();$('day').addEventListener('change',()=>{if(running){alert('Stop your live activity before changing the date.');$('day').value=selected;return}load()});
+$('nowStart').onclick=()=>{$('start').value=timeNow()};
+$('addBtn').onclick=()=>{
+ const name=$('name').value.trim(),start=$('start').value,end=$('end').value,category=$('category').value;
+ if(!name||!start||!end){alert('Please enter an activity, start time and end time. For a live activity, use Start live tracking.');return}
+ if(duration({start,end})<=0){alert('Please check the start and end times.');return}
+ entries.push({id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),name,start,end,category});save();clearForm();
+};
+$('beginBtn').onclick=()=>{
+ const name=$('name').value.trim(),start=$('start').value||timeNow();
+ if(!name){alert('Enter the activity name first.');return}
+ if(running){alert('Stop the current activity before starting another.');return}
+ running={name,start,category:$('category').value,date:selected};
+ $('runningName').textContent=running.name;$('runningSince').textContent='Started at '+running.start;$('runningBox').style.display='block';$('beginBtn').disabled=true;$('beginBtn').textContent='Tracking…';$('start').value=start;$('end').value='';
+};
+$('stopBtn').onclick=()=>{
+ if(!running)return;
+ const end=timeNow();
+ entries.push({id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),...running,end});running=null;
+ $('runningBox').style.display='none';$('beginBtn').disabled=false;$('beginBtn').textContent='▶ Start live tracking';save();clearForm();
+};
+$('exportBtn').onclick=()=>{
+ const backup={app:'My Day Time Tracker',version:1,exportedAt:new Date().toISOString(),days:{}};
+ for(let i=0;i<localStorage.length;i++){
+  const k=localStorage.key(i);
+  if(k&&k.startsWith('myday_entries_')) backup.days[k]=JSON.parse(localStorage.getItem(k)||'[]');
+ }
+ const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'});
+ const url=URL.createObjectURL(blob),a=document.createElement('a');
+ a.href=url;a.download='my-day-history-backup-'+today()+'.json';a.click();
+ URL.revokeObjectURL(url);
+};
+$('importBtn').onclick=()=>$('backupFile').click();
+$('backupFile').onchange=async e=>{
+ const f=e.target.files[0];if(!f)return;
+ try{
+  const data=JSON.parse(await f.text());
+  if(!data.days||typeof data.days!=='object')throw new Error('Invalid backup');
+  let count=0;
+  for(const [k,v] of Object.entries(data.days)){
+   if(!k.startsWith('myday_entries_')||!Array.isArray(v))continue;
+   const existing=JSON.parse(localStorage.getItem(k)||'[]');
+   const merged=[...existing];
+   const ids=new Set(existing.map(x=>x.id));
+   v.forEach(x=>{if(!ids.has(x.id)){merged.push(x);ids.add(x.id)}});
+   localStorage.setItem(k,JSON.stringify(merged));count++;
+  }
+  alert('Backup restored. '+count+' day(s) imported. Existing entries were kept; duplicates were skipped.');
+  load();
+ }catch(err){alert('Could not restore this file. Please select a valid My Day backup.')}
+ e.target.value='';
+};
+if('serviceWorker' in navigator && location.protocol.startsWith('http')){
+ navigator.serviceWorker.register('./sw.js').catch(()=>{});
+}
+load();
+</script>
+</body></html>
